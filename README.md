@@ -21,19 +21,24 @@ src/
     │   └── util/        # Shared utilities
     └── resources/
         └── application.yml
-pom.xml
+build.gradle
+settings.gradle
 ```
 
 ## Configuration
 
 PostgreSQL connects to `jdbc:postgresql://localhost:5432/notification_platform`
-by default. Override connection details with `DB_URL`, `DB_USERNAME`, and
-`DB_PASSWORD`. The default password is a local-development placeholder; set a
-real secret through the environment before running outside local development.
-Hibernate schema management uses `validate`, so schema changes should be
-managed explicitly.
+by default. Start the local database with `docker compose up -d postgres`; the
+Compose service creates the database and user expected by the app. Override
+connection details with `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`. The default
+password is for local development only; set a real secret through the
+environment outside local development. Hibernate schema management uses
+`validate`, so schema changes should be managed explicitly.
 
 Swagger UI is available at `/swagger-ui.html` and the OpenAPI document at
 `/api-docs`.
 
-Build and run with `mvn spring-boot:run` (requires PostgreSQL to be available).
+Build and test with `gradle test`, or run with `gradle bootRun` after PostgreSQL
+is healthy. In IntelliJ IDEA, reload the Gradle project and
+run the Gradle `bootRun` task, or select the `notification-platform.main` module
+for an Application run configuration. Set the Gradle JVM to JDK 17.

@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: notification_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ma1n
+    ports:
+      - "5432:5432"
+    volumes:
+      - notification-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notification_user -d notification_platform"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+volumes:
+  notification-postgres-data:
