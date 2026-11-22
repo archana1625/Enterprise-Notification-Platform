@@ -23,6 +23,12 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
+    @ExceptionHandler(TemplateRenderingException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTemplateRendering(
+            TemplateRenderingException exception) {
+        return respond(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(
             MethodArgumentNotValidException exception) {

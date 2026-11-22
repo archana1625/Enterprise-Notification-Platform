@@ -1,1 +1,3 @@
 rootProject.name = 'notification-platform'
+
+include 'notification-contract', 'delivery-service'

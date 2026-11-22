@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import com.enterprise.notification.dto.NotificationRequest;
 import com.enterprise.notification.dto.NotificationResponse;
 import com.enterprise.notification.entity.Notification;
+import com.enterprise.notification.event.NotificationEvent;
+import com.enterprise.notification.messaging.NotificationEventProducer;
 import com.enterprise.notification.exception.NotificationNotFoundException;
 import com.enterprise.notification.mapper.NotificationMapper;
 import com.enterprise.notification.repository.NotificationRepository;
@@ -29,6 +31,9 @@ class NotificationServiceImplTest {
     @Mock
     private NotificationMapper mapper;
 
+    @Mock
+    private NotificationEventProducer eventProducer;
+
     @InjectMocks
     private NotificationServiceImpl service;
 
@@ -37,7 +42,16 @@ class NotificationServiceImplTest {
         NotificationRequest request = new NotificationRequest();
         request.setRecipient("user@example.com");
         Notification entity = new Notification();
-        NotificationResponse response = new NotificationResponse();
+        Instant createdAt = Instant.now();
+        NotificationResponse response = NotificationResponse.builder()
+                .id(1L)
+                .recipient("user@example.com")
+                .channel(Notification.Channel.EMAIL)
+                .subject("Welcome")
+                .message("Hello")
+                .priority(Notification.Priority.MEDIUM)
+                .createdAt(createdAt)
+                .build();
 
         when(mapper.toEntity(request)).thenReturn(entity);
         when(repository.save(entity)).thenReturn(entity);
@@ -46,6 +60,8 @@ class NotificationServiceImplTest {
         assertThat(service.create(request)).isSameAs(response);
         assertThat(entity.getStatus()).isEqualTo(Notification.Status.PENDING);
         verify(repository).save(entity);
+        verify(eventProducer).publish(new NotificationEvent(
+                1L, "user@example.com", "EMAIL", "Welcome", "Hello", "MEDIUM", createdAt));
     }
 
     @Test

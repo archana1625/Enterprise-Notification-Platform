@@ -1,7 +1,7 @@
 # Enterprise Notification Platform
 
-Phase 0 establishes the Java 17 / Spring Boot 3 application foundation for a
-multi-channel notification platform.
+The Java 17 / Spring Boot 3 application provides multi-channel notifications
+and notification template management.
 
 ## Project structure
 
@@ -23,6 +23,8 @@ src/
         └── application.yml
 build.gradle
 settings.gradle
+notification-contract/  # Shared Kafka event DTO
+delivery-service/       # Independent Kafka consumer service
 ```
 
 ## Configuration
@@ -42,3 +44,30 @@ Build and test with `gradle test`, or run with `gradle bootRun` after PostgreSQL
 is healthy. In IntelliJ IDEA, reload the Gradle project and
 run the Gradle `bootRun` task, or select the `notification-platform.main` module
 for an Application run configuration. Set the Gradle JVM to JDK 17.
+
+## Notification templates
+
+Templates are managed at `/notification-templates` using `POST`, `GET`,
+`GET /{id}`, `PUT /{id}`, and `DELETE /{id}`. Template requests include
+`templateName`, `channel` (`EMAIL`, `SMS`, `PUSH`, or `IN_APP`),
+`subjectTemplate`, `bodyTemplate`, and `active`. Subjects and bodies support
+`{{variableName}}` placeholders, for example `Hello {{name}}` and
+`Order {{orderId}}`.
+
+Render a stored template with `POST /notification-templates/{id}/render` and
+a JSON body such as `{"variables":{"name":"Sam","orderId":"1234"}}`. The
+response contains the rendered `subject` and `body`; missing placeholder
+values return HTTP 400. The template schema is created by `schema.sql`.
+
+## Kafka notification events
+
+Creating a notification publishes a JSON `NotificationEvent` to the
+`notification-created` Kafka topic. The shared event contract is in
+`notification-contract`; `delivery-service` consumes the event and logs the
+notification ID and channel as its delivery-handler entry point. Consumer
+failures are retried three times and then sent to `notification-created.DLT`.
+
+Start PostgreSQL, Kafka, and the delivery service with
+`docker compose up --build`. Run the notification API locally with
+`gradle bootRun`; it connects to Kafka at `localhost:9092` by default.
+Set `KAFKA_BOOTSTRAP_SERVERS` to override the broker address for either app.

@@ -3,9 +3,11 @@ package com.enterprise.notification.service;
 import com.enterprise.notification.dto.NotificationRequest;
 import com.enterprise.notification.dto.NotificationResponse;
 import com.enterprise.notification.entity.Notification;
+import com.enterprise.notification.event.NotificationEvent;
 import com.enterprise.notification.exception.NotificationNotFoundException;
 import com.enterprise.notification.mapper.NotificationMapper;
 import com.enterprise.notification.repository.NotificationRepository;
+import com.enterprise.notification.messaging.NotificationEventProducer;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository repository;
     private final NotificationMapper mapper;
+    private final NotificationEventProducer eventProducer;
 
     @Override
     @Transactional
@@ -26,7 +29,16 @@ public class NotificationServiceImpl implements NotificationService {
         if (notification.getStatus() == null) {
             notification.setStatus(Notification.Status.PENDING);
         }
-        return mapper.toResponse(repository.save(notification));
+        NotificationResponse response = mapper.toResponse(repository.save(notification));
+        eventProducer.publish(new NotificationEvent(
+                response.getId(),
+                response.getRecipient(),
+                response.getChannel().name(),
+                response.getSubject(),
+                response.getMessage(),
+                response.getPriority().name(),
+                response.getCreatedAt()));
+        return response;
     }
 
     @Override
