@@ -71,7 +71,7 @@ public class Notification {
     }
 
     public enum Channel {
-        EMAIL, SMS, PUSH, IN_APP
+        EMAIL, SMS, WHATSAPP, PUSH
     }
 
     public enum Priority {

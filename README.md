@@ -49,7 +49,7 @@ for an Application run configuration. Set the Gradle JVM to JDK 17.
 
 Templates are managed at `/notification-templates` using `POST`, `GET`,
 `GET /{id}`, `PUT /{id}`, and `DELETE /{id}`. Template requests include
-`templateName`, `channel` (`EMAIL`, `SMS`, `PUSH`, or `IN_APP`),
+`templateName`, `channel` (`EMAIL`, `SMS`, `WHATSAPP`, or `PUSH`),
 `subjectTemplate`, `bodyTemplate`, and `active`. Subjects and bodies support
 `{{variableName}}` placeholders, for example `Hello {{name}}` and
 `Order {{orderId}}`.
@@ -63,9 +63,15 @@ values return HTTP 400. The template schema is created by `schema.sql`.
 
 Creating a notification publishes a JSON `NotificationEvent` to the
 `notification-created` Kafka topic. The shared event contract is in
-`notification-contract`; `delivery-service` consumes the event and logs the
-notification ID and channel as its delivery-handler entry point. Consumer
-failures are retried three times and then sent to `notification-created.DLT`.
+`notification-contract`; `delivery-service` consumes the event and routes it
+to a channel-specific sender using the Strategy pattern. The strategy keeps
+each channel's delivery behavior in its own implementation, while the factory
+discovers senders by channel instead of branching on channel types. A new
+channel can be added by registering another sender without changing the
+dispatcher or factory. The senders currently log their delivery requests;
+provider integrations (SMTP, SMS, WhatsApp, and push gateways) can be added
+without changing the dispatch flow. Consumer failures are retried three times
+and then sent to `notification-created.DLT`.
 
 Start PostgreSQL, Kafka, and the delivery service with
 `docker compose up --build`. Run the notification API locally with
